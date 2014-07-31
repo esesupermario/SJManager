@@ -1,0 +1,566 @@
+import java.io.*;
+/* Mario Gutierrez
+ * SJManager
+ * A01039315
+ * 
+ * proyecto final de Bachillerato Internacional
+ * el cual consiste en hacer una agenda a base
+ * de registros para capturar almacenar y desplegar
+ * informacion de forma que el usuario se beneficie.
+ * 
+ * El programa maneja archivos en forma binaria para 
+ * tener mas facil acceso en las busquedas
+ * 
+ * 6/12/2014
+ * 
+ * version 1.0
+ */
+
+public class SJManager
+{  private static BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+  private static PrintWriter stdOut= new PrintWriter(System.out,true); 
+  
+  /*
+  public static void main(String[] args)throws IOException {
+      String nom, cal, linea, matbaja, dato;
+      int op, edad, dir, tel;
+      boolean existe;
+    */
+  //Comienzo el main 
+  public static void main (String[] args) throws IOException {
+     
+    //declaro mis variables
+  int op;  
+    //pongo el menu
+    
+    do
+    {
+      
+      stdOut.println("Bienvenido al sistema SJManager que desea hacer");
+      stdOut.println("1) Capturar inventario");
+      stdOut.println("2) Desplegar inventario");
+      stdOut.println("3) Vender");
+      stdOut.println("4) Alerta de inventario");
+      stdOut.println("5) Buscar producto");
+      stdOut.println("6) Actualizar informacion de producto");
+      stdOut.println("7) Eliminar Producto");
+      stdOut.println("8) Salir");
+      
+      stdOut.println("Que desea hacer?");
+      op= Integer.parseInt(stdIn.readLine());
+      
+      switch(op)
+      {
+           case 1: capturar();
+        break;
+           case 2: desplegar();
+        break;
+           case 3: vender();
+        break;
+         //  case 4: alertar();
+       // break;
+           case 5: buscar();
+        break;
+           case 6: modificar();
+        break;
+           case 7: eliminar();
+        break;
+           case 8: stdOut.println("Gracias por usar el programa");
+      }
+    }
+    while(op != 8);
+  }
+  
+  public static void capturar() throws IOException
+  { 
+    //primero creo archivo random donde se guarden los datos del inventario
+    try
+    { 
+      RandomAccessFile SJdata=new RandomAccessFile ("SJdata.dat","rw");
+       //inicializo variables para leer los datos del teclado
+      String nom;
+      int cant;
+      double price;
+      int i;
+      boolean existe;
+      String op ="";
+        
+      do
+      {
+      //capturo datos en el archivo
+        System.out.println("Nombre del Producto?");
+        nom = stdIn.readLine();
+        System.out.println("Cantidad que hay?");
+        cant= Integer.parseInt(stdIn.readLine());
+        System.out.println("Precio");
+        price= Double.parseDouble(stdIn.readLine());
+        //ahora reviso si el string del nombre del producto es de menos de 25 caracteres
+        if (nom.length()<25)
+        {
+          for (i=nom.length(); i<25;i++) 
+            nom=nom + " ";
+        }
+         else
+          //trunca la información a 25 caracteres si es que el nombre es mayor
+          nom=nom.substring(0,25);
+         //grabando en el archivo
+        if (SJdata.length()!=0)
+        SJdata.seek(SJdata.length()); // posiciona al final del archivo el cursor o apuntador
+        //empieza a grabrar los datos en el archivo
+        SJdata.writeChars(nom);
+        SJdata.writeInt(cant);
+        SJdata.writeDouble(price);
+        System.out.println ("deseas registrar otra informacion");
+        op=stdIn.readLine();
+      } while (op.equalsIgnoreCase("Si")); 
+      SJdata.close();  // cierra el archivo cuando ya no desea grabar mas
+    } catch( FileNotFoundException e) 
+    {
+      System.out.println("archivo no encontrado");
+    }
+  } 
+       
+  public static void desplegar() throws IOException
+  {
+    try{ 
+      //declarando e inicializando las variables donde se leeran los registros
+      String nom= "";
+      int cant= 0;
+      double price= 0;
+     
+ 
+      long tamRegistro= 62;
+      long cantRegistros=0;
+      
+      //abriendo archivo
+      RandomAccessFile SJdata=new RandomAccessFile ("SJdata.dat","rw");
+      //calcular el numero de registros del archivo
+      cantRegistros=SJdata.length()/tamRegistro;
+      //lee cada registro
+      for(int registro=0;registro<cantRegistros; registro ++)
+        //posiciona el apuntador al inicio de cada registro
+      {   SJdata.seek(registro*tamRegistro);
+        
+        nom="";
+        
+        //lee el nombre
+         for (int j=0; j<25;j++)
+         nom=nom + SJdata.readChar();
+         
+         //leyendo la cantidad
+        cant =SJdata.readInt();
+        
+        //lee el precio
+        price = SJdata.readDouble();
+        
+        // desplegando datos
+         System.out.println(nom + " " + cant + " " + price);
+        // hay que limpiar la variable string de nombre si no Java concatena los string
+       //de todos los registros que leerá.
+         nom="";
+         cant=0;
+         price=0;
+         
+        }
+        SJdata.close();// cierra el archivo
+       } // try
+        catch(EOFException e)
+        {   
+          System.out.println("Error al leer el archivo");
+        }      
+     }//main
+  
+  public static void vender() throws IOException
+   {
+    //inicializando variables
+    
+    String nom= "";
+    String elnom= "";
+    int cant= 0;
+    double price= 0;
+    int registro=0;
+    long tamRegistro=62;
+    long cantRegistros=0;
+    boolean existe= false;
+    int pzas;
+  
+//abro el archivo y capturo los datos  
+  
+try 
+  {
+    // Abriendo archivo
+ RandomAccessFile SJdata=new RandomAccessFile("SJdata.dat","rw");
+ //calulando cantidad de registros del archivo
+  cantRegistros=SJdata.length()/tamRegistro;
+ // pide el nombre a buscar
+ System.out.println("que producto se esta vendiendo?");
+ elnom=stdIn.readLine();
+ elnom=elnom.trim();
+// busca en el archivo el nombre del producto 
+  while ( (registro<cantRegistros)&& (existe==false)) 
+  { // se posiciona al inicio para buscar el nombre del producto
+  SJdata.seek(registro*tamRegistro); 
+  for( int i=1;i<=25;i++)
+     nom=nom + SJdata.readChar(); //lee el nombre
+  nom=nom.trim();
+  if (nom.equalsIgnoreCase(elnom)) 
+  {
+    // si el nombre buscado es igual al nombre leído del archivo  
+    
+    //leo los demas datos
+    cant=SJdata.readInt();
+    price=SJdata.readDouble();
+    
+    //le pregunto al usuario cuantas piezas se esta llevando para poder calcular el precio final
+    stdOut.println("Cuantas piezas se estan comprando?");
+    pzas=Integer.parseInt(stdIn.readLine());
+    double resultado= pzas*price;
+   
+       //despliego el producto las piezas y el precio total
+    System.out.println("Se estan vendiendo " + pzas + " piezas de " + elnom + " y el total de " + resultado + " pesos");
+      // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         
+         //quito las piezas que se vendieron a la variable cant
+         
+         int actpieza;
+         actpieza=cant-pzas;
+ 
+         stdOut.println("antes habian " + cant + " piezas");
+         stdOut.println("y ahora hay ");
+         stdOut.println(actpieza);
+         SJdata.seek(registro*tamRegistro+50); 
+         SJdata.writeInt(actpieza);
+         
+         //nose si esto si va aqui
+         cant=0;
+         price=0;
+         existe=true;
+     }
+registro=registro +1;// incrementa el siguiente registro
+nom="";
+  } //while
+  
+  if (existe==false)
+    
+  {
+   System.out.println("no existió el nombre: " );
+  }
+   SJdata.close();
+ } //try
+
+ catch (EOFException e) 
+ {   
+  System.out.println("Error en archivo");
+ }
+}
+  
+  public static void buscar() throws IOException
+  {
+    //inicializando variables
+    
+    String nom= "";
+    String elnom= "";
+    int cant= 0;
+    double price= 0;
+    int registro=0;
+    long tamRegistro=62;
+    long cantRegistros=0;
+    boolean existe= false;
+  
+//abro el archivo y capturo los datos  
+  
+try 
+  {
+    // Abriendo archivo
+ RandomAccessFile SJdata=new RandomAccessFile("SJdata.dat","rw");
+ //calulando cantidad de registros del archivo
+  cantRegistros=SJdata.length()/tamRegistro;
+ // pide el nombre a buscar
+ System.out.println("que producto quieres buscar?");
+ elnom=stdIn.readLine();
+ elnom=elnom.trim();
+// busca en el archivo el nombre del producto 
+  while ( (registro<cantRegistros)&& (existe==false)) 
+  { // se posiciona al inicio para buscar el nombre del producto
+  SJdata.seek(registro*tamRegistro); 
+  for( int i=1;i<=25;i++)
+     nom=nom + SJdata.readChar(); //lee el nombre
+  nom=nom.trim();
+  if (nom.equalsIgnoreCase(elnom)) 
+  {
+    // si el nombre buscado es igual al nombre leído del archivo  
+    
+    //leo los demas datos
+    cant=SJdata.readInt();
+    price=SJdata.readDouble();
+   
+       //despliego la información leida del archivo
+       System.out.println(nom + ", actualmente hay " + cant + " piezas y el precio es de " + price + " pesos");
+      // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         //nose si esto si va aqui
+         cant=0;
+         price=0;
+         existe=true;
+     }
+registro=registro +1;// incrementa el siguiente registro
+nom="";
+  } //while
+  
+  if (existe==false)
+  {
+   System.out.println("no existió el nombre: " );
+  }
+   SJdata.close();
+ } //try
+
+ catch (EOFException e) 
+ {   
+  System.out.println("Error en archivo");
+ }
+}
+  
+public static void modificar() throws IOException
+{
+    //inicializando variables
+    
+    String nom= "";
+    String elnom= "";
+    int cant= 0;
+    double price= 0;
+    int registro=0;
+    long tamRegistro=62;
+    long cantRegistros=0;
+    boolean existe= false;
+    int pzas;
+  
+//abro el archivo y capturo los datos  
+  
+try 
+  {
+    // Abriendo archivo
+ RandomAccessFile SJdata=new RandomAccessFile("SJdata.dat","rw");
+ //calulando cantidad de registros del archivo
+  cantRegistros=SJdata.length()/tamRegistro;
+ // pide el nombre a buscar
+ System.out.println("que producto quieres modificar?");
+ elnom=stdIn.readLine();
+ elnom=elnom.trim();
+// busca en el archivo el nombre del producto 
+  while ( (registro<cantRegistros)&& (existe==false)) 
+  { // se posiciona al inicio para buscar el nombre del producto
+  SJdata.seek(registro*tamRegistro); 
+  for( int i=1;i<=25;i++)
+     nom=nom + SJdata.readChar(); //lee el nombre
+  nom=nom.trim();
+  if (nom.equalsIgnoreCase(elnom)) 
+  {
+    // si el nombre buscado es igual al nombre leído del archivo  
+    
+    //leo los demas datos
+    cant=SJdata.readInt();
+    price=SJdata.readDouble();
+   
+    
+    stdOut.println("Que deseas cambiar?");
+    stdOut.println("a) nombre del producto");
+    stdOut.println("b) cantiduad del producto");
+    stdOut.println("c) precio del producto");
+    String answer= stdIn.readLine();
+    
+    if (answer.equalsIgnoreCase("a") || answer.equalsIgnoreCase("el nombre") || answer.equalsIgnoreCase("nombre del producto")) 
+    {
+      String continuacion="";
+      String resetnombre= "";
+      do{
+   //le pregunto al usuario cual seria el nuevo nombre
+    stdOut.println("Cual seria el nombre a sustituir a " + nom + "?" );
+    resetnombre=stdIn.readLine();
+   
+    //ahora corto el nombre del nuevo producto a 25 si es necesario
+        if (resetnombre.length()<25)
+        {
+          for (int i=resetnombre.length(); i<25;i++) 
+            resetnombre=resetnombre + " ";
+        }
+         else
+          //trunca la información a 25 caracteres si es que el nombre es mayor
+          resetnombre=resetnombre.substring(0,25);
+    
+    //valido que el usuario quiere hacer el cambio
+    System.out.println("Esta seguro que quiere remplazar el nombre " + nom + " por el siguiente: " + resetnombre + "?");
+    continuacion= stdIn.readLine();
+      }while (continuacion.equalsIgnoreCase("no"));
+        
+    // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         continuacion="";
+
+         SJdata.seek(registro*tamRegistro+0); 
+         SJdata.writeChars(resetnombre);
+    }
+     
+    if (answer.equalsIgnoreCase("b") || answer.equalsIgnoreCase("la cantidad") || answer.equalsIgnoreCase("cantidad del producto")) 
+    {
+      String continuacion="";
+      int resetcant= 0;
+      do{
+   //le pregunto al usuario cual seria el nuevo nombre
+    stdOut.println("Cual seria la cantidad a sustituir a " + cant + "?" );
+    resetcant= Integer.parseInt(stdIn.readLine());
+   
+    //valido que el usuario quiere hacer el cambio
+    System.out.println("Esta seguro que quiere remplazar el nombre " + cant + " por el siguiente: " + resetcant + "?");
+    continuacion= stdIn.readLine();
+      }while (continuacion.equalsIgnoreCase("no"));
+        
+    // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         continuacion="";
+
+         SJdata.seek(registro*tamRegistro+50); 
+         SJdata.writeInt(resetcant);
+    }
+    
+    
+    if (answer.equalsIgnoreCase("c") || answer.equalsIgnoreCase("el precio") || answer.equalsIgnoreCase("precio del producto")) 
+    {
+      String continuacion="";
+      double resetprice= 0;
+      do{
+   //le pregunto al usuario cual seria el nuevo nombre
+    stdOut.println("Cual seria el precio a sustituir a " + price + "?" );
+    resetprice= Double.parseDouble(stdIn.readLine());
+   
+    //valido que el usuario quiere hacer el cambio
+    System.out.println("Esta seguro que quiere remplazar el nombre " + price + " por el siguiente: " + resetprice + "?");
+    continuacion= stdIn.readLine();
+      }while (continuacion.equalsIgnoreCase("no"));
+        
+    // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         continuacion="";
+
+         SJdata.seek(registro*tamRegistro+54); 
+         SJdata.writeDouble(resetprice);
+    } 
+     
+         
+         //nose si esto si va aqui
+         cant=0;
+         price=0;
+         existe=true;
+     }
+registro=registro +1;// incrementa el siguiente registro
+nom="";
+  } //while
+  
+  if (existe==false)
+    
+  {
+   System.out.println("no existió el nombre: " );
+  }
+   SJdata.close();
+ } //try
+
+ catch (EOFException e) 
+ {   
+  System.out.println("Error en archivo");
+ }
+}
+
+public static void eliminar() throws IOException
+ {
+    //inicializando variables
+    
+    String nom= "";
+    String elnom= "";
+    int cant= 0;
+    double price= 0;
+    int registro=0;
+    long tamRegistro=62;
+    long cantRegistros=0;
+    boolean existe= false;
+  
+//abro el archivo y capturo los datos  
+  
+try 
+  {
+    // Abriendo archivo
+ RandomAccessFile SJdata=new RandomAccessFile("SJdata.dat","rw");
+ //calulando cantidad de registros del archivo
+  cantRegistros=SJdata.length()/tamRegistro;
+ // pide el nombre a buscar
+ System.out.println("que producto quieres eliminar?");
+ elnom=stdIn.readLine();
+ elnom=elnom.trim();
+// busca en el archivo el nombre del producto 
+  while ( (registro<cantRegistros)&& (existe==false)) 
+  { // se posiciona al inicio para buscar el nombre del producto
+  SJdata.seek(registro*tamRegistro); 
+  for( int i=1;i<=25;i++)
+     nom=nom + SJdata.readChar(); //lee el nombre
+  nom=nom.trim();
+  if (nom.equalsIgnoreCase(elnom)) 
+  {
+    // si el nombre buscado es igual al nombre leído del archivo  
+    
+    //leo los demas datos
+    cant=SJdata.readInt();
+    price=SJdata.readDouble();
+   
+   
+    
+      String continuacion="";
+   
+      //valido que el usuario quiere hacer el cambio
+      do{
+    System.out.println("Esta seguro que quiere borrar el producto: "+ nom + "?");
+    continuacion= stdIn.readLine();
+      }while (continuacion.equalsIgnoreCase("no"));
+        
+    // limpiar strings o java encadena con la siguiente
+         elnom="";
+         nom= "";
+         continuacion="";
+
+         //borro todo el registro
+         SJdata.seek(registro*tamRegistro+0); 
+         SJdata.writeChars("null                     ");
+         SJdata.seek(registro*tamRegistro+50); 
+         SJdata.writeInt(-1);
+         SJdata.seek(registro*tamRegistro+54); 
+         SJdata.writeDouble(-1);
+    
+         //nose si esto si va aqui
+         cant=0;
+         price=0;
+         existe=true;
+     }
+registro=registro +1;// incrementa el siguiente registro
+nom="";
+  } //while
+  
+  if (existe==false)
+    
+  {
+   System.out.println("no existió el nombre: " );
+  }
+   SJdata.close();
+ } //try
+
+ catch (EOFException e) 
+ {   
+  System.out.println("Error en archivo");
+ }
+}
+
+
+
+}
